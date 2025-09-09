@@ -22,7 +22,7 @@ jobs:
 
       - name: Add upstream and fetch
         run: |
-          git remote add upstream https://github.com/owner/repo.git
+          git remote add upstream https://github.com/luestr/ShuntRules
           git fetch upstream
 
       - name: Rebase onto upstream/main
