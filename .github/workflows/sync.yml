@@ -1,37 +1,40 @@
-name: Sync Fork (Rebase)
+# 存成 .github/workflows/sync.yml
+name: Sync Fork (Rebase or Hard Reset Fallback)
 
 on:
   schedule:
-    - cron: '0 0 * * *'   # 每天 0 点运行一次
-  workflow_dispatch:       # 允许在 Actions 页面手动触发
+    - cron: '0 0 * * *'  # 每天 UTC 00:00 运行（约北京时间 8 点）
+  workflow_dispatch:     # 可手动触发
 
 jobs:
   sync:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout fork
         uses: actions/checkout@v4
         with:
-          persist-credentials: false
+          persist-credentials: false  # 不使用默认 token
 
-      - name: Set Git identity
+      - name: Set Git identity for Action
         run: |
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
 
-      - name: Add upstream and fetch
+      - name: Add upstream remote and fetch
         run: |
-          git remote add upstream https://github.com/luestr/ShuntRules
+          git remote add upstream https://github.com/luestr/ShuntRules.git
           git fetch upstream
 
-      - name: Rebase onto upstream/main
+      - name: Try to rebase onto upstream/main
         run: |
           git checkout main
-          git rebase upstream/main || true
-
-      - name: Push changes (force with lease)
-        run: |
-          git push --force-with-lease origin main
+          if git rebase upstream/main; then
+            echo "Rebase successful"
+            git push origin main
+          else
+            echo "Rebase failed — falling back to hard reset"
+            git reset --hard upstream/main
+            git push --force origin main
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
