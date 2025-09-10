@@ -1,4 +1,4 @@
-name: 同步 Surge 上游模块
+name: Kelee规则更新
 
 on:
   schedule:
